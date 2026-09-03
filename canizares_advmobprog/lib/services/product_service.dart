@@ -67,7 +67,7 @@ class ProductService {
           // Search for first List value in the map
           for (final v in decoded.values) {
             if (v is List) {
-              dataList = v as List<dynamic>;
+              dataList = v;
               break;
             }
           }
