@@ -6,6 +6,7 @@ import '../services/product_service.dart';
 import '../widgets/custom_text.dart';
 import 'cart_screen.dart';
 import 'product_screen.dart';
+import 'profile_screen.dart';
 import 'settings_screen.dart';
 
 // Enhancement 1: Search bar and product filtering
@@ -409,11 +410,17 @@ class _HomeScreenState extends State<HomeScreen> {
           if (i == 1) {
             Navigator.push(
               context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          } else if (i == 2) {
+            Navigator.push(
+              context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
             );
           }
         },
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),

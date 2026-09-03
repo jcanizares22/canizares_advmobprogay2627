@@ -1,14 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/cart.dart';
 import '../model/cart_service.dart';
+import '../model/user.dart';
 import '../models/product.dart';
 import 'product_screen.dart';
 
 class CartScreen extends StatefulWidget {
-  final int userId;
+  final int? userId;
 
-  const CartScreen({super.key, this.userId = 1});
+  const CartScreen({super.key, this.userId});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -21,7 +25,61 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _cartsFuture = _service.fetchCartsByUserId(widget.userId);
+    _cartsFuture = _loadCartsForSavedUser();
+  }
+
+  Future<List<Cart>> _loadCartsForSavedUser() async {
+    var userId = widget.userId;
+    if (userId == null) {
+      const userDataKey = 'savedUser';
+      final preferences = await SharedPreferences.getInstance();
+      final savedUser = preferences.getString(userDataKey);
+      if (savedUser == null || savedUser.isEmpty) {
+        throw Exception('No saved user data found');
+      }
+
+      final decoded = jsonDecode(savedUser);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid saved user data');
+      }
+      userId = User.fromJson(decoded).id;
+    }
+
+    final remoteCarts = await _service.fetchCartsByUserId(userId);
+    final preferences = await SharedPreferences.getInstance();
+    final savedProducts = preferences.getStringList('localCartProducts_$userId');
+    if (savedProducts == null || savedProducts.isEmpty) return remoteCarts;
+
+    final remoteProductIds = remoteCarts
+        .expand((cart) => cart.products)
+        .map((product) => product.id)
+        .toSet();
+    final localProducts = savedProducts
+        .map(jsonDecode)
+        .whereType<Map<String, dynamic>>()
+        .map(CartProduct.fromJson)
+        .where((product) => !remoteProductIds.contains(product.id))
+        .toList();
+    if (localProducts.isEmpty) return remoteCarts;
+
+    return [
+      ...remoteCarts,
+      Cart(
+        id: -1,
+        userId: userId,
+        products: localProducts,
+        total: localProducts.fold(0, (sum, product) => sum + product.total),
+        discountedTotal: localProducts.fold(
+          0,
+          (sum, product) => sum + product.discountedTotal,
+        ),
+        totalProducts: localProducts.length,
+        totalQuantity: localProducts.fold(
+          0,
+          (sum, product) => sum + product.quantity,
+        ),
+      ),
+    ];
   }
 
   Product _productFromCartItem(CartProduct item) {

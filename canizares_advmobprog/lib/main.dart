@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/theme_provider.dart';
-import 'screens/home_screen.dart';
+import 'screen/splash_screen.dart';
 
 /// Entry point of the application.
 void main() {
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Poppins',
         ),
         themeMode: theme.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       );
     });
   }

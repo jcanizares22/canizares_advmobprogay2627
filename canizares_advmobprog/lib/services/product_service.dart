@@ -44,7 +44,7 @@ class ProductService {
       normalized = 'https://$base';
     }
 
-    final url = Uri.parse(normalized);
+    final url = Uri.parse('$normalized/products');
     late final http.Response resp;
     try {
       resp = await _client.get(url);

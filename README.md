@@ -14,3 +14,6 @@ A flutter Project that focuses on advance topics. Covering the web to mobile tra
 
 ## Lab Activity 3
 - **Lab 3 API Part II**: Sa activity na ito, natutunan ko kung paano mag-integrate ng Cart API sa Flutter gamit ang Provider pattern. Gumawa rin ako ng cart.dart at cart_service.dart para mas maayos ang organization ng code at API data.
+
+## Lab Activity 3
+-**Lab 4 API Part III**: Sa activity na ito, natutunan ko kung paano i-integrate ang authentication features sa Flutter application gamit ang API. Na-implement ang custom splash screen, persistent login gamit ang SharedPreferences, sign-in authentication, user data/profile rendering, at pag-handle ng cart gamit ang user ID. Sinigurado rin na compatible ang mga bagong features sa existing Provider, API services, navigation, at UI ng previous activities.

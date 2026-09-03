@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/cart_service.dart';
 import '../models/product.dart';
@@ -6,6 +9,8 @@ import '../widgets/custom_text.dart';
 
 // Enhancement 2: Product/article details page
 class ProductScreen extends StatelessWidget {
+  static const _savedUserKey = 'savedUser';
+
   final Product product;
 
   const ProductScreen({super.key, required this.product});
@@ -90,10 +95,23 @@ class ProductScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       try {
+                        final preferences = await SharedPreferences.getInstance();
+                        final savedUser = preferences.getString(_savedUserKey);
+                        final userData = savedUser == null
+                            ? null
+                            : jsonDecode(savedUser);
+                        final userId = userData is Map<String, dynamic>
+                            ? (userData['id'] as num?)?.toInt()
+                            : null;
+                        if (userId == null) {
+                          throw Exception('No saved user data found');
+                        }
+
                         await CartService().addToCart(
-                          userId: 1,
+                          userId: userId,
                           productId: product.id,
                         );
+                        await _saveLocalCartProduct(preferences, userId);
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -119,5 +137,41 @@ class ProductScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _saveLocalCartProduct(
+    SharedPreferences preferences,
+    int userId,
+  ) async {
+    final key = 'localCartProducts_$userId';
+    final savedProducts = preferences.getStringList(key) ?? [];
+    final productData = jsonEncode({
+      'id': product.id,
+      'title': product.title,
+      'price': product.price,
+      'quantity': 1,
+      'total': product.price,
+      'discountPercentage': 0,
+      'discountedTotal': product.price,
+      'thumbnail': product.image,
+    });
+
+    final existingIndex = savedProducts.indexWhere((item) {
+      final data = jsonDecode(item);
+      return data is Map<String, dynamic> && data['id'] == product.id;
+    });
+    if (existingIndex == -1) {
+      savedProducts.add(productData);
+    } else {
+      final data = jsonDecode(savedProducts[existingIndex]);
+      if (data is Map<String, dynamic>) {
+        final quantity = (data['quantity'] as num?)?.toInt() ?? 0;
+        data['quantity'] = quantity + 1;
+        data['total'] = product.price * (quantity + 1);
+        data['discountedTotal'] = product.price * (quantity + 1);
+        savedProducts[existingIndex] = jsonEncode(data);
+      }
+    }
+    await preferences.setStringList(key, savedProducts);
   }
 }
