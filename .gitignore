@@ -46,3 +46,4 @@ app.*.map.json
 
 canizares_advmobprog/build/
 
+.env

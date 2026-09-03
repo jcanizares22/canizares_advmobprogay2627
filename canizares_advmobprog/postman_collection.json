@@ -1,0 +1,29 @@
+{
+  "info": {
+    "name": "DummyJSON Products",
+    "_postman_id": "dummyjson-products-collection",
+    "description": "Simple collection to fetch products from dummyjson.com",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://dummyjson.com/products",
+          "protocol": "https",
+          "host": [
+            "dummyjson",
+            "com"
+          ],
+          "path": [
+            "products"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
