@@ -41,7 +41,7 @@ class CartService {
 
   Future<List<Cart>> fetchCartsByUserId(int userId) async {
     final base = await _loadApiBase();
-    final response = await _client.get(Uri.parse('$base/carts/user/$userId'));
+    final response = await _getWithRetry(Uri.parse('$base/carts/user/$userId'));
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -96,6 +96,15 @@ class CartService {
       throw Exception('Invalid add-cart API response: $error');
     } on TypeError catch (error) {
       throw Exception('Invalid add-cart API response: $error');
+    }
+  }
+
+  Future<http.Response> _getWithRetry(Uri uri) async {
+    try {
+      return await _client.get(uri);
+    } on Exception {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return _client.get(uri);
     }
   }
 

@@ -44,7 +44,12 @@ class ProductService {
       normalized = 'https://$base';
     }
 
-    final url = Uri.parse('$normalized/products');
+    final baseUri = Uri.parse(normalized);
+    final basePath = baseUri.path.replaceFirst(RegExp(r'/+$'), '');
+    final productsPath = basePath.endsWith('/products')
+      ? basePath
+      : '$basePath/products';
+    final url = baseUri.replace(path: productsPath);
     late final http.Response resp;
     try {
       resp = await _client.get(url);

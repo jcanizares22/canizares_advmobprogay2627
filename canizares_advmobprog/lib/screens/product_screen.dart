@@ -1,16 +1,14 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/cart_service.dart';
 import '../models/product.dart';
 import '../widgets/custom_text.dart';
 
 // Enhancement 2: Product/article details page
 class ProductScreen extends StatelessWidget {
-  static const _savedUserKey = 'savedUser';
-
   final Product product;
 
   const ProductScreen({super.key, required this.product});
@@ -95,22 +93,14 @@ class ProductScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       try {
-                        final preferences = await SharedPreferences.getInstance();
-                        final savedUser = preferences.getString(_savedUserKey);
-                        final userData = savedUser == null
-                            ? null
-                            : jsonDecode(savedUser);
-                        final userId = userData is Map<String, dynamic>
-                            ? (userData['id'] as num?)?.toInt()
-                            : null;
+                        final userId = FirebaseAuth.instance.currentUser?.uid;
                         if (userId == null) {
-                          throw Exception('No saved user data found');
+                          throw StateError(
+                            'Sign in to add products to your cart.',
+                          );
                         }
-
-                        await CartService().addToCart(
-                          userId: userId,
-                          productId: product.id,
-                        );
+                        final preferences =
+                            await SharedPreferences.getInstance();
                         await _saveLocalCartProduct(preferences, userId);
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +131,7 @@ class ProductScreen extends StatelessWidget {
 
   Future<void> _saveLocalCartProduct(
     SharedPreferences preferences,
-    int userId,
+    String userId,
   ) async {
     final key = 'localCartProducts_$userId';
     final savedProducts = preferences.getStringList(key) ?? [];

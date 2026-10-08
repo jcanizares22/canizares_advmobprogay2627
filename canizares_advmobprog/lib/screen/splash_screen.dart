@@ -1,39 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../screens/home_screen.dart';
-import 'signin_screen.dart';
-
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  static const _loginStateKey = 'isLoggedIn';
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveInitialScreen();
-  }
-
-  Future<void> _resolveInitialScreen() async {
-    final preferences = await SharedPreferences.getInstance();
-    final isLoggedIn = preferences.getBool(_loginStateKey) ?? false;
-
-    await Future<void>.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => isLoggedIn ? const HomeScreen() : const SignInScreen(),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
