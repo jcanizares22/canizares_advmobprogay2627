@@ -17,3 +17,6 @@ A flutter Project that focuses on advance topics. Covering the web to mobile tra
 
 ## Lab Activity 4
 - **Lab 4 API Part III**: Sa activity na ito, natutunan ko kung paano i-integrate ang authentication features sa Flutter application gamit ang DummyJSON API. Na-implement ang custom splash screen, persistent login gamit ang SharedPreferences, sign-in authentication, user data/profile rendering, at pag-handle ng cart gamit ang user ID. Sinigurado rin na compatible ang mga bagong features sa existing Provider, API services, navigation, at UI ng previous activities.
+
+## Lab Activity 5
+- **Lab 5 Firebase**: Sa activity na ito, in-integrate ko ang Firebase Email/Password Authentication gamit ang Provider para ma-manage ang user at session state ng buong app, at ang Cloud Firestore para sa profile data. Puwedeng mag-register at mag-sign in ang mga user, mag-reset o mag-update ng password, magpalit ng username, mag-delete ng account, at mag-log out na may confirmation prompt. Inihambing ko rin ang managed authentication at automatic token refresh ng Firebase sa sample API login ng DummyJSON. Sa profile screen, ipinapakita ang account type at mga detalye ng user.
