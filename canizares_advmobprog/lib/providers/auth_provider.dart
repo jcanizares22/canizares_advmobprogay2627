@@ -95,11 +95,21 @@ class AuthProvider extends ChangeNotifier {
       );
       _loginType = LoginType.firebase;
       _dummyJsonSession = null;
-      await credential!.user!.updateDisplayName(profile.username);
       _firebaseUser = _userService.currentUser;
       _isInitializing = false;
       _user = profile;
-      await _userService.saveUserData(profile);
+      unawaited(
+        credential!.user!.updateDisplayName(profile.username).catchError((
+          Object error,
+        ) {
+          _errorMessage = _friendlyError(error);
+        }),
+      );
+      unawaited(
+        _userService.saveUserData(profile).catchError((Object error) {
+          _errorMessage = _friendlyError(error);
+        }),
+      );
     });
   }
 
@@ -169,10 +179,11 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _handleAuthChange(firebase_auth.User? user) async {
     if (user != null) {
+      final hasCurrentProfile = _user?.uid == user.uid;
       _loginType = LoginType.firebase;
       _dummyJsonSession = null;
       _firebaseUser = user;
-      await _loadProfile();
+      if (!hasCurrentProfile) await _loadProfile();
     } else if (_loginType != LoginType.dummyJson) {
       _firebaseUser = null;
       _user = null;

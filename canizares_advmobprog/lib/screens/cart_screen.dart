@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/cart.dart';
 import '../models/product.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/safe_svg.dart';
 import 'product_screen.dart';
 import 'profile_screen.dart';
@@ -70,7 +71,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<String> _getUserId() async {
     if (widget.userId != null) return widget.userId!;
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = context.read<AuthProvider>().user?.uid;
     if (userId == null) throw Exception('No authenticated user is signed in.');
     return userId;
   }

@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/profile_screen.dart';
 import 'screen/splash_screen.dart';
 
 Future<void> main() async {
@@ -75,7 +75,7 @@ class _AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     if (auth.isInitializing) return const SplashScreen();
-    return auth.isAuthenticated ? const ProfileScreen() : const LoginScreen();
+    return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
   }
 }
 

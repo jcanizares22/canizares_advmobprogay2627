@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/product.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_text.dart';
 
 // Enhancement 2: Product/article details page
@@ -93,7 +94,7 @@ class ProductScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       try {
-                        final userId = FirebaseAuth.instance.currentUser?.uid;
+                        final userId = context.read<AuthProvider>().user?.uid;
                         if (userId == null) {
                           throw StateError(
                             'Sign in to add products to your cart.',
