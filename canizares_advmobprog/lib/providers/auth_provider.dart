@@ -37,7 +37,9 @@ class AuthProvider extends ChangeNotifier {
   LoginType _loginType = LoginType.firebase;
   bool _isInitializing = true;
   bool _isLoading = false;
+  bool _isCreatingAccount = false;
   String? _errorMessage;
+  Future<void>? _profileLoad;
 
   UserModel? get user => _user;
   LoginType get loginType => _loginType;
@@ -80,36 +82,47 @@ class AuthProvider extends ChangeNotifier {
     required String username,
   }) {
     return _run(() async {
-      final credential = await _userService.createAccount(email, password);
-      final uid = credential?.user?.uid;
-      if (uid == null) throw StateError('Firebase did not return a user ID.');
+      _isCreatingAccount = true;
+      try {
+        final credential = await _userService.createAccount(email, password);
+        final authUser = credential?.user;
+        if (authUser == null) {
+          throw StateError('Firebase did not return a user ID.');
+        }
 
-      final profile = UserModel(
-        uid: uid,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        age: age,
-        contactNumber: contactNumber.trim(),
-        username: username.trim(),
-        email: email.trim(),
-      );
-      _loginType = LoginType.firebase;
-      _dummyJsonSession = null;
-      _firebaseUser = _userService.currentUser;
-      _isInitializing = false;
-      _user = profile;
-      unawaited(
-        credential!.user!.updateDisplayName(profile.username).catchError((
-          Object error,
-        ) {
-          _errorMessage = _friendlyError(error);
-        }),
-      );
-      unawaited(
-        _userService.saveUserData(profile).catchError((Object error) {
-          _errorMessage = _friendlyError(error);
-        }),
-      );
+        final profile = UserModel(
+          uid: authUser.uid,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          age: age,
+          contactNumber: contactNumber.trim(),
+          username: username.trim(),
+          email: email.trim(),
+        );
+        try {
+          await _userService.saveUserData(profile);
+        } catch (error) {
+          try {
+            await authUser.delete();
+          } on firebase_auth.FirebaseAuthException catch (cleanupError) {
+            throw StateError(
+              'The profile could not be saved to Firestore ($error), and '
+              'the new Firebase account could not be removed '
+              '(${cleanupError.message ?? cleanupError.code}).',
+            );
+          }
+          rethrow;
+        }
+
+        await _userService.signOut();
+        _loginType = LoginType.firebase;
+        _dummyJsonSession = null;
+        _firebaseUser = null;
+        _isInitializing = false;
+        _user = null;
+      } finally {
+        _isCreatingAccount = false;
+      }
     });
   }
 
@@ -132,8 +145,12 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> updateUsername(String username) {
     return _run(() async {
-      await _userService.updateUsername(username);
-      _user = _user?.copyWith(username: username.trim());
+      final profile = _user;
+      if (profile == null) {
+        throw StateError('Your account profile has not finished loading.');
+      }
+      await _userService.updateUsername(profile, username);
+      _user = profile.copyWith(username: username.trim());
     });
   }
 
@@ -178,6 +195,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _handleAuthChange(firebase_auth.User? user) async {
+    if (_isCreatingAccount) return;
     if (user != null) {
       final hasCurrentProfile = _user?.uid == user.uid;
       _loginType = LoginType.firebase;
@@ -192,7 +210,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadProfile() {
+    final currentLoad = _profileLoad;
+    if (currentLoad != null) return currentLoad;
+
+    final load = _loadProfileData();
+    _profileLoad = load;
+    return load.whenComplete(() {
+      if (identical(_profileLoad, load)) _profileLoad = null;
+    });
+  }
+
+  Future<void> _loadProfileData() async {
     try {
       _user = UserModel.fromMap(await _userService.getUserData());
     } catch (error) {

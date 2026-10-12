@@ -49,6 +49,27 @@ class UserModel {
     'loginType': loginType.name,
   };
 
+  Map<String, dynamic> toChatProfileMap() => {
+    'uid': uid,
+    'firstName': firstName,
+    'lastName': lastName,
+    'username': username,
+    'email': email,
+  };
+
+  bool matchesChatSearch(String query) {
+    final searchTerms = query
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((term) => term.isNotEmpty);
+    if (searchTerms.isEmpty) return true;
+
+    final searchableText =
+        '$firstName $lastName $username $email'.toLowerCase();
+    return searchTerms.every(searchableText.contains);
+  }
+
   UserModel copyWith({
     String? uid,
     String? firstName,

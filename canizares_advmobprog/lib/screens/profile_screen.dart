@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/username_edit_dialog.dart';
 import 'cart_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
@@ -12,34 +13,11 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _editUsername(BuildContext context, UserModel user) async {
     final auth = context.read<AuthProvider>();
-    final controller = TextEditingController(text: user.username);
     final username = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Update username'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Username',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (_) => UsernameEditDialog(initialUsername: user.username),
     );
-    controller.dispose();
-    if (username == null || username.isEmpty || !context.mounted) return;
+    if (username == null || !context.mounted) return;
     final succeeded = await auth.updateUsername(username);
     if (!context.mounted) return;
     _showResult(context, succeeded, 'Username updated.');
@@ -193,7 +171,11 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final succeeded = await auth.signOut();
     if (!context.mounted) return;
-    if (!succeeded) _showResult(context, false, 'Unable to sign out.');
+    if (succeeded) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      _showResult(context, false, 'Unable to sign out.');
+    }
   }
 
   void _showResult(
@@ -316,9 +298,7 @@ class ProfileScreen extends StatelessWidget {
               label: const Text('Edit username'),
             ),
             OutlinedButton.icon(
-              onPressed: auth.isLoading
-                  ? null
-                  : () => _changePassword(context),
+              onPressed: auth.isLoading ? null : () => _changePassword(context),
               icon: const Icon(Icons.password_outlined),
               label: const Text('Update password'),
             ),

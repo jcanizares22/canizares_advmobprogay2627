@@ -4,36 +4,19 @@ import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/username_edit_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   Future<void> _updateUsername(BuildContext context, AuthProvider auth) async {
-    final controller = TextEditingController(text: auth.user?.username ?? '');
     final username = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Update username'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Username'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (_) => UsernameEditDialog(
+        initialUsername: auth.user?.username ?? '',
       ),
     );
-    controller.dispose();
-    if (username == null || username.isEmpty || !context.mounted) return;
+    if (username == null || !context.mounted) return;
     final succeeded = await auth.updateUsername(username);
     if (!context.mounted) return;
     _showResult(context, auth, succeeded, 'Username updated.');

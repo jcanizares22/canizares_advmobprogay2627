@@ -103,7 +103,9 @@ class _CartScreenState extends State<CartScreen> {
       await preferences.setStringList(key, savedProducts);
 
       if (!mounted) return;
-      setState(() => _cartsFuture = _loadCartsForSavedUser());
+      setState(() {
+        _cartsFuture = _loadCartsForSavedUser();
+      });
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

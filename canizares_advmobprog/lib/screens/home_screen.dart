@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
 import '../widgets/safe_svg.dart';
 
 import '../models/product.dart';
 import '../services/product_service.dart';
 import '../widgets/custom_text.dart';
 import 'cart_screen.dart';
+import 'chat_list_screen.dart';
 import 'product_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
@@ -71,6 +75,22 @@ class _HomeScreenState extends State<HomeScreen> {
         return title.contains(query) || desc.contains(query);
       }).toList();
     });
+  }
+
+  void _openChats() {
+    final auth = context.read<AuthProvider>();
+    if (auth.firebaseUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sign in with Firebase to use the chat feature.'),
+        ),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatListScreen()),
+    );
   }
 
   @override
@@ -399,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _openChats,
         icon: const Icon(Icons.chat),
         label: const Text('Chat'),
       ),

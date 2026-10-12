@@ -44,18 +44,35 @@ class UserService {
   }
 
   Future<void> saveUserData(UserModel user) async {
-    await _firestore.collection('users').doc(user.uid).set(user.toMap());
+    final batch = _firestore.batch()
+      ..set(_firestore.collection('users').doc(user.uid), user.toMap())
+      ..set(
+        _firestore.collection('chat_profiles').doc(user.uid),
+        user.toChatProfileMap(),
+      );
+    await batch.commit();
   }
 
   Future<void> signOut() => _auth.signOut();
 
-  Future<void> updateUsername(String username) async {
-    final user = _requireCurrentUser();
+  Future<void> updateUsername(UserModel profile, String username) async {
+    final authUser = _requireCurrentUser();
+    if (authUser.uid != profile.uid) {
+      throw StateError('The profile does not belong to the signed-in user.');
+    }
     final updatedUsername = username.trim();
-    await user.updateDisplayName(updatedUsername);
-    await _firestore.collection('users').doc(user.uid).set({
-      'username': updatedUsername,
-    }, SetOptions(merge: true));
+    final updatedProfile = profile.copyWith(username: updatedUsername);
+    final batch = _firestore.batch()
+      ..set(
+        _firestore.collection('users').doc(authUser.uid),
+        updatedProfile.toMap(),
+        SetOptions(merge: true),
+      )
+      ..set(
+        _firestore.collection('chat_profiles').doc(authUser.uid),
+        updatedProfile.toChatProfileMap(),
+      );
+    await batch.commit();
   }
 
   Future<void> resetPassword(String email) async {
@@ -100,13 +117,14 @@ class UserService {
   Future<void> deleteAccount() async {
     final user = _requireCurrentUser();
     await _firestore.collection('users').doc(user.uid).delete();
+    await _firestore.collection('chat_profiles').doc(user.uid).delete();
     await user.delete();
   }
 
   Future<Map<String, dynamic>> getUserData() async {
     final user = _requireCurrentUser();
     final snapshot = await _firestore.collection('users').doc(user.uid).get();
-    return {
+    final userData = {
       ...?snapshot.data(),
       'uid': user.uid,
       'email': user.email ?? '',
@@ -114,6 +132,14 @@ class UserService {
       'username':
           snapshot.data()?['username'] as String? ?? user.displayName ?? '',
     };
+    await _firestore.collection('chat_profiles').doc(user.uid).set({
+      'uid': user.uid,
+      'firstName': userData['firstName'] ?? '',
+      'lastName': userData['lastName'] ?? '',
+      'username': userData['username'] ?? '',
+      'email': userData['email'] ?? '',
+    });
+    return userData;
   }
 
   firebase_auth.User _requireCurrentUser() {
